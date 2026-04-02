@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HBPM บันทึกความดันโลหิต — รพ.แปลงยาว</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1a3a5c;
+  --blue: #2574a9;
+  --sky: #d6eaf8;
+  --peach: #fde8d8;
+  --green: #1e8449;
+  --green-bg: #d5f5e3;
+  --amber: #b7770d;
+  --amber-bg: #fef9e7;
+  --red: #c0392b;
+  --red-bg: #fadbd8;
+  --gray: #f4f6f8;
+  --border: #d0dce8;
+  --text: #1a2e3b;
+  --muted: #6b7f91;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Sarabun', sans-serif;
+  background: #eef2f7;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: var(--navy);
+  color: white;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 3px 12px rgba(26,58,92,0.3);
+}
+.app-header .icon {
+  width: 46px; height: 46px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+}
+.app-header h1 { font-size: 17px; font-weight: 700; line-height: 1.3; }
+.app-header p  { font-size: 12px; opacity: 0.75; margin-top: 1px; }
+.header-badge {
+  margin-left: auto;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* ── LAYOUT ── */
+.wrap { max-width: 820px; margin: 0 auto; padding: 16px; }
+
+/* ── CARD ── */
+.card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.card-head {
+  background: var(--navy);
+  color: white;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 7px;
+}
+.card-body { padding: 14px 16px; }
+
+/* ── PATIENT FORM ── */
+.pt-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.2fr;
+  gap: 10px;
+}
+.fgroup label {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.fgroup input, .fgroup select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  background: white;
+}
+.fgroup input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37,116,169,0.12);
+}
+
+/* ── TAB HINT ── */
+.tab-hint {
+  background: #fffbe6;
+  border: 1px solid #f5d76e;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12px;
+  color: #7d5a00;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tab-key {
+  background: white;
+  border: 1.5px solid #c8a800;
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7d5a00;
+  flex-shrink: 0;
+}
+
+/* ── BP TABLE ── */
+.bp-scroll { overflow-x: auto; }
+table.bp-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 640px;
+}
+table.bp-tbl th, table.bp-tbl td {
+  border: 1px solid var(--border);
+  text-align: center;
+  padding: 0;
+}
+.th-top {
+  background: var(--navy);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 4px;
+}
+.th-morning { background: #dbeafe; color: #1e3a5f; font-size: 12px; font-weight: 700; padding: 5px 3px; }
+.th-evening { background: #fde8d8; color: #7c2d12; font-size: 12px; font-weight: 700; padding: 5px 3px; }
+.th-sub-m   { background: #eff6ff; color: #1e3a5f; font-size: 11px; font-weight: 600; padding: 4px 2px; }
+.th-sub-e   { background: #fff7ed; color: #7c2d12; font-size: 11px; font-weight: 600; padding: 4px 2px; }
+
+.day-cell {
+  font-weight: 700; font-size: 13px; color: var(--navy);
+  background: #f0f5fb; padding: 0 6px; width: 34px;
+}
+.date-cell { background: white; width: 70px; }
+
+/* bp input cells */
+.bp-num {
+  width: 44px !important;
+  padding: 5px 2px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-family: 'Sarabun', sans-serif;
+  outline: none;
+  width: 100%;
+  display: block;
+}
+.bp-num:focus { background: #e8f4ff !important; }
+.bp-num.hi { color: var(--red) !important; background: #fff0f0 !important; }
+.bp-num.ok { color: var(--green) !important; }
+
+.date-inp {
+  width: 100%; border: none; padding: 5px 4px;
+  font-size: 12px; font-family: 'Sarabun', sans-serif;
+  background: transparent; outline: none; text-align: center;
+  color: var(--muted);
+}
+.date-inp:focus { background: #f0f8ff; }
+
+td.num-cell { padding: 2px; }
+td.num-cell:focus-within { background: #e8f4ff; outline: 2px solid var(--blue); outline-offset: -2px; }
+
+/* avg row */
+.avg-row td { background: var(--navy); color: white; font-size: 13px; font-weight: 600; padding: 7px 4px; }
+.avg-val { font-size: 17px; font-weight: 700; }
+
+/* ── RESULT PANEL ── */
+.result-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.result-block { border-radius: 12px; border: 2px solid; overflow: hidden; }
+.result-block.morning { border-color: #3b82f6; }
+.result-block.evening { border-color: #f97316; }
+.rb-head { padding: 8px 12px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.morning .rb-head { background: #dbeafe; color: #1e3a5f; }
+.evening .rb-head { background: #fde8d8; color: #7c2d12; }
+.rb-body { padding: 10px 14px; background: white; }
+.bp-display { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+.bp-big   { font-size: 34px; font-weight: 800; color: var(--navy); line-height: 1; }
+.bp-slash { font-size: 24px; color: #aaa; }
+.bp-unit  { font-size: 12px; color: var(--muted); margin-left: 3px; }
+.bp-sub   { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; }
+
+.result-overall {
+  background: var(--gray); border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.overall-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+.overall-val   { font-size: 22px; font-weight: 800; color: var(--navy); }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 700;
+}
+.s-good  { background: var(--green-bg); color: var(--green); }
+.s-warn  { background: var(--amber-bg); color: var(--amber); }
+.s-bad   { background: var(--red-bg);   color: var(--red);   }
+.s-empty { background: var(--gray);     color: var(--muted); }
+
+.criteria-box {
+  background: #f0f6fc;
+  border-left: 4px solid var(--blue);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px; font-size: 12px;
+  color: var(--navy); line-height: 1.7;
+}
+.count-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.count-chip {
+  background: white; border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 11.5px; color: var(--muted);
+}
+
+/* ── BUTTONS ── */
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn {
+  flex: 1; min-width: 130px;
+  padding: 12px 16px;
+  border: none; border-radius: 10px;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer;
+  transition: transform .1s, opacity .15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-calc  { background: var(--blue);  color: white; }
+.btn-print { background: var(--green); color: white; display: none; }
+.btn-clear { background: white; color: var(--muted); border: 1.5px solid var(--border); }
+
+/* ── PRINT ── */
+#print-area { display: none; }
+
+@media print {
+  body * { visibility: hidden !important; }
+  #print-area, #print-area * { visibility: visible !important; }
+  #print-area {
+    display: block !important;
+    position: fixed; top: 0; left: 0;
+    width: 100%; padding: 16px 20px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 13px; color: #111;
+    background: white;
+  }
+  .p-split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .p-half-box  { border-radius: 8px; padding: 10px 12px; }
+  .p-half-title { font-size: 13px; font-weight: 700; color: #1a3a5c; margin-bottom: 6px; }
+  .p-header { text-align: center; margin-bottom: 12px; border-bottom: 3px solid #1a3a5c; padding-bottom: 8px; }
+  .p-title  { font-size: 17px; font-weight: 800; color: #1a3a5c; }
+  .p-sub    { font-size: 12px; color: #555; }
+  .p-info   { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; }
+  .p-info span { color: #555; }
+  .p-tbl    { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+  .p-tbl th, .p-tbl td { border: 1px solid #bbb; padding: 4px 6px; text-align: center; }
+  .p-tbl thead th { background: #d6eaf8; font-weight: 700; }
+  .p-tbl .th-eve  { background: #fde8d8; }
+  .p-avg td { background: #1a3a5c; color: white; font-weight: 700; font-size: 14px; padding: 6px; }
+  .p-result { border: 2px solid #1a3a5c; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
+  .p-nums   { display: flex; gap: 16px; margin-bottom: 6px; align-items: baseline; }
+  .p-big    { font-size: 32px; font-weight: 800; color: #1a3a5c; }
+  .p-slash  { font-size: 20px; color: #aaa; }
+  .p-lbl    { font-size: 11px; color: #666; }
+  .p-badge  { display: inline-block; padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+  .p-note   { font-size: 11px; color: #555; border-left: 3px solid #2574a9; padding-left: 8px; line-height: 1.6; }
+  .p-sign   { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 28px; text-align: center; font-size: 12px; }
+  .p-sign-line { border-top: 1px solid #333; margin: 28px 16px 4px; }
+  .p-footer { text-align: right; font-size: 11px; color: #999; border-top: 1px solid #ccc; padding-top: 5px; margin-top: 10px; }
+}
+
+@media (max-width: 600px) {
+  .pt-grid { grid-template-columns: 1fr 1fr; }
+  .result-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="icon">🩺</div>
+  <div>
+    <h1>บันทึกความดันโลหิตที่บ้าน (HBPM)</h1>
+    <p>โรงพยาบาลแปลงยาว · คลินิกความดันโลหิตสูง</p>
+  </div>
+  <div class="header-badge">Tab ➜ ถัดไป</div>
+</div>
+
+<div class="wrap">
+
+  <!-- PATIENT INFO -->
+  <div class="card">
+    <div class="card-head">👤 ข้อมูลผู้ป่วย</div>
+    <div class="card-body">
+      <div class="pt-grid">
+        <div class="fgroup">
+          <label>ชื่อ-นามสกุล</label>
+          <input id="pt-name" type="text" placeholder="กรอกชื่อผู้ป่วย" tabindex="1">
+        </div>
+        <div class="fgroup">
+          <label>HN / รหัสผู้ป่วย</label>
+          <input id="pt-hn" type="text" placeholder="เช่น 00012345" tabindex="2">
+        </div>
+        <div class="fgroup">
+          <label>วันที่นัด</label>
+          <input id="pt-date" type="date" tabindex="3">
+        </div>
+        <div class="fgroup">
+          <label>แพทย์ผู้รักษา</label>
+          <input id="pt-doc" type="text" placeholder="ชื่อแพทย์" tabindex="4">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB HINT -->
+  <div class="tab-hint">
+    <span class="tab-key">Tab</span>
+    กดปุ่ม Tab เพื่อข้ามไปช่องถัดไปได้เลย · กรอกแค่ตัวเลขความดัน ไม่ต้องใส่ "/" ·
+    <strong>ช่องสีแดง</strong> = ค่าสูงเกินเกณฑ์
+  </div>
+
+  <!-- BP TABLE -->
+  <div class="card">
+    <div class="card-head">📋 กรอกค่าความดันโลหิต 7 วัน</div>
+    <div class="card-body" style="padding: 10px 12px;">
+      <div class="bp-scroll">
+        <table class="bp-tbl" id="bp-tbl">
+          <thead>
+            <tr>
+              <th class="th-top" rowspan="3" style="width:34px;">วัน</th>
+              <th class="th-top" rowspan="3" style="width:70px;">วันที่</th>
+              <th class="th-morning" colspan="3">🌅 เช้า ครั้งที่ 1</th>
+              <th class="th-morning" colspan="3">🌅 เช้า ครั้งที่ 2</th>
+              <th class="th-evening" colspan="3">🌙 เย็น ครั้งที่ 1</th>
+              <th class="th-evening" colspan="3">🌙 เย็น ครั้งที่ 2</th>
+            </tr>
+            <tr>
+              <th class="th-sub-m">SBP</th><th class="th-sub-m">DBP</th><th class="th-sub-m">ชีพจร</th>
+              <th class="th-sub-m">SBP</th><th class="th-sub-m">DBP</th><th class="th-sub-m">ชีพจร</th>
+              <th class="th-sub-e">SBP</th><th class="th-sub-e">DBP</th><th class="th-sub-e">ชีพจร</th>
+              <th class="th-sub-e">SBP</th><th class="th-sub-e">DBP</th><th class="th-sub-e">ชีพจร</th>
+            </tr>
+            <tr>
+              <th class="th-sub-m" style="font-size:9px;color:#6b7f91;" colspan="3">ก่อนกินยา ก่อนอาหาร</th>
+              <th class="th-sub-m" style="font-size:9px;color:#6b7f91;" colspan="3">ห่างกัน 5-10 นาที</th>
+              <th class="th-sub-e" style="font-size:9px;color:#6b7f91;" colspan="3">ตอนเย็น/ก่อนนอน</th>
+              <th class="th-sub-e" style="font-size:9px;color:#6b7f91;" colspan="3">ห่างกัน 5-10 นาที</th>
+            </tr>
+          </thead>
+          <tbody id="bp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="card" id="result-card">
+    <div class="card-head">📊 ผลสรุปค่าเฉลี่ย HBPM</div>
+    <div class="card-body" id="result-body">
+      <div style="color:var(--muted); font-size:13px; text-align:center; padding:12px 0;">
+        กรอกข้อมูลแล้วกด <strong>"คำนวณ"</strong> เพื่อดูผล
+      </div>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="btn-row">
+    <button class="btn btn-calc"  onclick="calculate()">🔢 คำนวณ</button>
+    <button class="btn btn-print" id="btn-print" onclick="doPrint()">🖨️ พิมพ์ส่งแพทย์</button>
+    <button class="btn btn-clear" onclick="clearAll()">🗑️ ล้างข้อมูล</button>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- PRINT AREA -->
+<div id="print-area"></div>
+
+<script>
+// ── CONFIG ──
+const DAYS = 7;
+const SLOTS = ['m1','m2','e1','e2'];
+const SLOT_LABELS = ['เช้า ครั้งที่ 1','เช้า ครั้งที่ 2','เย็น ครั้งที่ 1','เย็น ครั้งที่ 2'];
+let tabIndex = 10;
+
+// ── BUILD TABLE ──
+function buildTable() {
+  const tbody = document.getElementById('bp-tbody');
+  tbody.innerHTML = '';
+  for (let d = 1; d <= DAYS; d++) {
+    const tr = document.createElement('tr');
+    // Day label
+    const tdDay = document.createElement('td');
+    tdDay.className = 'day-cell';
+    tdDay.textContent = d;
+    tr.appendChild(tdDay);
+    // Date input
+    const tdDate = document.createElement('td');
+    tdDate.className = 'date-cell';
+    const dateInp = document.createElement('input');
+    dateInp.className = 'date-inp';
+    dateInp.type = 'text';
+    dateInp.placeholder = 'วัน/เดือน/ปี';
+    dateInp.tabIndex = tabIndex++;
+    tdDate.appendChild(dateInp);
+    tr.appendChild(tdDate);
+    // BP cells: 4 slots × 3 fields (sbp, dbp, pulse)
+    SLOTS.forEach((s, si) => {
+      ['sbp','dbp','pulse'].forEach(f => {
+        const td = document.createElement('td');
+        td.className = 'num-cell';
+        const inp = document.createElement('input');
+        inp.className = 'bp-num';
+        inp.type = 'number';
+        inp.min = f === 'pulse' ? 30 : 50;
+        inp.max = f === 'pulse' ? 200 : 260;
+        inp.placeholder = '—';
+        inp.id = `${f}_${s}_${d}`;
+        inp.tabIndex = tabIndex++;
+        if (f === 'sbp') inp.addEventListener('input', () => colorCheck(inp, true));
+        if (f === 'dbp') inp.addEventListener('input', () => colorCheck(inp, false));
+        td.appendChild(inp);
+        tr.appendChild(td);
+      });
+    });
+    tbody.appendChild(tr);
+  }
+}
+
+function colorCheck(el, isSBP) {
+  const v = parseFloat(el.value);
+  if (!v) { el.className = 'bp-num'; return; }
+  el.className = 'bp-num ' + ((isSBP ? v >= 135 : v >= 85) ? 'hi' : 'ok');
+}
+
+function getV(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const v = parseFloat(el.value);
+  return (!isNaN(v) && v > 0) ? v : null;
+}
+
+// ── HELPERS ──
+function avg(arr) { return arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : null; }
+function statusOf(sbp, dbp) {
+  if (sbp === null || dbp === null) return { cls:'s-empty', icon:'—', text:'ไม่มีข้อมูล' };
+  if (sbp < 130 && dbp < 80)   return { cls:'s-good', icon:'✅', text:'ควบคุมได้ดี' };
+  if (sbp >= 135 || dbp >= 85) return { cls:'s-bad',  icon:'⚠️', text:'ยังควบคุมไม่ได้' };
+  return { cls:'s-warn', icon:'🔔', text:'เฝ้าระวัง' };
+}
+function pillHtml(sbp, dbp) {
+  if (sbp === null) return '<span class="status-pill s-empty">— ไม่มีข้อมูล</span>';
+  const s = statusOf(sbp, dbp);
+  return `<span class="status-pill ${s.cls}">${s.icon} ${s.text}</span>`;
+}
+
+// ── CALCULATE ──
+function calculate() {
+  // Collect by session: m1+m2 = morning, e1+e2 = evening
+  let mSBP=[], mDBP=[], eSBP=[], eDBP=[], allSBP=[], allDBP=[];
+  for (let d = 1; d <= DAYS; d++) {
+    ['m1','m2'].forEach(s => {
+      const sbp = getV(`sbp_${s}_${d}`), dbp = getV(`dbp_${s}_${d}`);
+      if (sbp!==null) { mSBP.push(sbp); allSBP.push(sbp); }
+      if (dbp!==null) { mDBP.push(dbp); allDBP.push(dbp); }
+    });
+    ['e1','e2'].forEach(s => {
+      const sbp = getV(`sbp_${s}_${d}`), dbp = getV(`dbp_${s}_${d}`);
+      if (sbp!==null) { eSBP.push(sbp); allSBP.push(sbp); }
+      if (dbp!==null) { eDBP.push(dbp); allDBP.push(dbp); }
+    });
+  }
+
+  const body = document.getElementById('result-body');
+  if (allSBP.length === 0) {
+    body.innerHTML = `<div style="color:var(--red);font-size:13px;text-align:center;padding:10px;">⚠️ กรุณากรอกข้อมูลอย่างน้อย 1 รายการ</div>`;
+    return;
+  }
+
+  const mAvgS = avg(mSBP), mAvgD = avg(mDBP);
+  const eAvgS = avg(eSBP), eAvgD = avg(eDBP);
+  const aAvgS = avg(allSBP), aAvgD = avg(allDBP);
+  const maxSBP = Math.max(...allSBP), minSBP = Math.min(...allSBP);
+  const overall = statusOf(aAvgS, aAvgD);
+
+  function blockHtml(label, icon, cls, sbp, dbp, count) {
+    const nodata = sbp === null;
+    const s = statusOf(sbp, dbp);
+    return `
+    <div class="result-block ${cls}">
+      <div class="rb-head">${icon} ${label}</div>
+      <div class="rb-body">
+        ${nodata
+          ? `<div style="color:var(--muted);font-size:13px;padding:10px 0;">ยังไม่มีข้อมูล</div>`
+          : `<div class="bp-display">
+               <span class="bp-big">${sbp}</span>
+               <span class="bp-slash">/</span>
+               <span class="bp-big">${dbp}</span>
+               <span class="bp-unit">mmHg</span>
+             </div>
+             <div class="bp-sub">SBP เฉลี่ย / DBP เฉลี่ย · ${count} ค่า</div>
+             ${pillHtml(sbp, dbp)}`
+        }
+      </div>
+    </div>`;
+  }
+
+  body.innerHTML = `
+    <div class="result-row">
+      ${blockHtml('ความดันเฉลี่ยช่วงเช้า','🌅','morning', mAvgS, mAvgD, mSBP.length)}
+      ${blockHtml('ความดันเฉลี่ยช่วงเย็น','🌙','evening', eAvgS, eAvgD, eSBP.length)}
+    </div>
+    <div class="result-overall">
+      <div>
+        <div class="overall-label">ค่าเฉลี่ยรวมทั้งหมด (เช้า+เย็น)</div>
+        <div style="display:flex;align-items:baseline;gap:4px;margin-top:2px;">
+          <span class="overall-val">${aAvgS}</span>
+          <span style="font-size:18px;color:#aaa;">/</span>
+          <span class="overall-val">${aAvgD}</span>
+          <span style="font-size:12px;color:var(--muted);margin-left:4px;">mmHg</span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        ${pillHtml(aAvgS, aAvgD)}
+        <div class="count-row" style="justify-content:flex-end;">
+          <span class="count-chip">🌅 เช้า ${mSBP.length} ค่า</span>
+          <span class="count-chip">🌙 เย็น ${eSBP.length} ค่า</span>
+          <span class="count-chip">รวม ${allSBP.length} ค่า</span>
+        </div>
+      </div>
+    </div>
+    <div class="criteria-box">
+      <strong>เกณฑ์แปลผล HBPM</strong><br>
+      ✅ ควบคุมได้ดี = &lt; 130/80 mmHg &nbsp;|&nbsp;
+      🔔 เฝ้าระวัง = 130–134 / 80–84 mmHg &nbsp;|&nbsp;
+      ⚠️ ยังควบคุมไม่ได้ = ≥ 135/85 mmHg<br>
+      SBP สูงสุด: ${maxSBP} &nbsp;|&nbsp; ต่ำสุด: ${minSBP} mmHg
+    </div>`;
+
+  document.getElementById('btn-print').style.display = 'flex';
+  window._res = {
+    mAvgS, mAvgD, eAvgS, eAvgD, aAvgS, aAvgD,
+    mCount: mSBP.length, eCount: eSBP.length, total: allSBP.length,
+    maxSBP, minSBP,
+    mStatus: statusOf(mAvgS,mAvgD), eStatus: statusOf(eAvgS,eAvgD), overall
+  };
+}
+
+// ── PRINT ──
+function doPrint() {
+  const res = window._res;
+  if (!res) return;
+
+  const name = document.getElementById('pt-name').value || '—';
+  const hn   = document.getElementById('pt-hn').value   || '—';
+  const doc  = document.getElementById('pt-doc').value  || '—';
+  const appt = document.getElementById('pt-date').value;
+  const apptStr = appt ? new Date(appt).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'}) : '—';
+  const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+
+  // Build data rows
+  let rows = '';
+  for (let d = 1; d <= DAYS; d++) {
+    const dateEl = document.querySelector(`#bp-tbl tbody tr:nth-child(${d}) .date-inp`);
+    const dateVal = dateEl ? dateEl.value : '';
+    let cells = `<td>${d}</td><td>${dateVal}</td>`;
+    SLOTS.forEach(s => {
+      const sbp   = getV(`sbp_${s}_${d}`)   ?? '—';
+      const dbp   = getV(`dbp_${s}_${d}`)   ?? '—';
+      const pulse = getV(`pulse_${s}_${d}`) ?? '—';
+      cells += `<td>${sbp}</td><td>${dbp}</td><td>${pulse}</td>`;
+    });
+    rows += `<tr>${cells}</tr>`;
+  }
+
+  const sc = { 's-good':'background:#d5f5e3;color:#1e8449', 's-warn':'background:#fef9e7;color:#b7770d', 's-bad':'background:#fadbd8;color:#c0392b', 's-empty':'background:#eee;color:#666' };
+  const mSc = sc[res.mStatus.cls] || '';
+  const eSc = sc[res.eStatus.cls] || '';
+  const aSc = sc[res.overall.cls] || '';
+
+  function resultBox(label, sbp, dbp, count, status, style) {
+    if (sbp === null) return `<div class="p-half-box" style="${style}"><div class="p-half-title">${label}</div><div style="color:#aaa;font-size:12px;">ไม่มีข้อมูล</div></div>`;
+    return `
+      <div class="p-half-box" style="${style}">
+        <div class="p-half-title">${label}</div>
+        <div class="p-nums"><span class="p-big">${sbp}</span><span class="p-slash">/</span><span class="p-big">${dbp}</span><span style="font-size:12px;color:#777;margin-left:4px;">mmHg</span></div>
+        <div style="font-size:11px;color:#666;margin-bottom:5px;">${count} ค่า</div>
+        <span class="p-badge" style="${sc[status.cls]}">${status.icon} ${status.text}</span>
+      </div>`;
+  }
+
+  document.getElementById('print-area').innerHTML = `
+    <div class="p-header">
+      <div class="p-title">สรุปผลการวัดความดันโลหิตที่บ้าน (HBPM)</div>
+      <div class="p-sub">โรงพยาบาลแปลงยาว · คลินิกความดันโลหิตสูง · วันที่พิมพ์: ${today}</div>
+    </div>
+    <div class="p-info">
+      <div><span>ชื่อ-นามสกุล: </span><strong>${name}</strong></div>
+      <div><span>HN: </span><strong>${hn}</strong></div>
+      <div><span>วันนัด: </span><strong>${apptStr}</strong></div>
+      <div><span>แพทย์: </span><strong>${doc}</strong></div>
+    </div>
+
+    <div class="p-split-row">
+      ${resultBox('🌅 ความดันเฉลี่ยช่วงเช้า', res.mAvgS, res.mAvgD, res.mCount, res.mStatus, 'border:2px solid #3b82f6;')}
+      ${resultBox('🌙 ความดันเฉลี่ยช่วงเย็น', res.eAvgS, res.eAvgD, res.eCount, res.eStatus, 'border:2px solid #f97316;')}
+    </div>
+
+    <div class="p-result">
+      <div style="font-size:12px;font-weight:700;color:#1a3a5c;margin-bottom:6px;">ค่าเฉลี่ยรวมทั้งหมด (เช้า+เย็น)</div>
+      <div class="p-nums">
+        <div><div style="font-size:10px;color:#555;">SBP เฉลี่ย</div><div class="p-big">${res.aAvgS}</div></div>
+        <div class="p-slash">/</div>
+        <div><div style="font-size:10px;color:#555;">DBP เฉลี่ย</div><div class="p-big">${res.aAvgD}</div></div>
+        <div style="font-size:12px;color:#888;align-self:flex-end;padding-bottom:4px;margin-left:4px;">mmHg (${res.total} ค่า)</div>
+      </div>
+      <div><span class="p-badge" style="${aSc}">${res.overall.icon} ${res.overall.text}</span></div>
+      <div class="p-note">
+        เกณฑ์ HBPM: ควบคุมได้ดี &lt; 130/80 | เฝ้าระวัง 130–134/80–84 | ยังควบคุมไม่ได้ ≥ 135/85 mmHg<br>
+        SBP สูงสุด: ${res.maxSBP} | ต่ำสุด: ${res.minSBP} mmHg
+      </div>
+    </div>
+
+    <table class="p-tbl">
+      <thead>
+        <tr>
+          <th rowspan="2">วัน</th><th rowspan="2">วันที่</th>
+          <th colspan="3">เช้า ครั้งที่ 1</th>
+          <th colspan="3">เช้า ครั้งที่ 2</th>
+          <th colspan="3" class="th-eve">เย็น ครั้งที่ 1</th>
+          <th colspan="3" class="th-eve">เย็น ครั้งที่ 2</th>
+        </tr>
+        <tr>
+          <th>SBP</th><th>DBP</th><th>ชีพจร</th>
+          <th>SBP</th><th>DBP</th><th>ชีพจร</th>
+          <th class="th-eve">SBP</th><th class="th-eve">DBP</th><th class="th-eve">ชีพจร</th>
+          <th class="th-eve">SBP</th><th class="th-eve">DBP</th><th class="th-eve">ชีพจร</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+
+    <div class="p-sign">
+      <div><div class="p-sign-line"></div>พยาบาลผู้บันทึก</div>
+      <div><div class="p-sign-line"></div>แพทย์ผู้รับทราบ</div>
+    </div>
+    <div class="p-footer">โปรแกรม HBPM · โรงพยาบาลแปลงยาว · ${today}</div>`;
+
+  setTimeout(() => window.print(), 100);
+}
+
+// ── CLEAR ──
+function clearAll() {
+  if (!confirm('ต้องการล้างข้อมูลทั้งหมดใช่ไหม?')) return;
+  ['pt-name','pt-hn','pt-doc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('.bp-num, .date-inp').forEach(el => {
+    el.value = '';
+    el.className = el.className.includes('bp-num') ? 'bp-num' : el.className;
+  });
+  document.getElementById('result-body').innerHTML =
+    `<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px 0;">กรอกข้อมูลแล้วกด <strong>"คำนวณ"</strong> เพื่อดูผล</div>`;
+  document.getElementById('btn-print').style.display = 'none';
+  window._res = null;
+}
+
+// ── INIT ──
+buildTable();
+document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
